@@ -5,17 +5,15 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    // Fetch Scryfall bulk card data
     const res = await fetch("https://api.scryfall.com/bulk-data/default_cards");
     const bulk = await res.json();
 
     const fileRes = await fetch(bulk.download_uri);
     const cards = await fileRes.json();
 
-    // Filter Standard-legal cards
     const standardCards = cards.filter((c: any) => c.legalities?.standard === "legal");
 
-    // ✅ Color counts (only the 5 basics WUBRG)
+    // WUBRG color counts
     const colorCounts: Record<string, number> = { W: 0, U: 0, B: 0, R: 0, G: 0 };
     standardCards.forEach((c: any) => {
       if (c.colors?.length === 1) {
@@ -24,7 +22,7 @@ export async function GET() {
     });
     const colors = Object.entries(colorCounts).map(([name, value]) => ({ name, value }));
 
-    // ✅ Creature subtypes
+    // Creature subtypes
     const subtypeCounts: Record<string, number> = {};
     standardCards.forEach((c: any) => {
       if (c.type_line?.includes("Creature")) {
@@ -44,7 +42,7 @@ export async function GET() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
 
-    // ✅ Pick Top Cards (recent, non-common, with images)
+    // Top cards
     const topPool = standardCards
       .filter((c: any) => c.rarity !== "common" && c.image_uris?.normal)
       .sort(

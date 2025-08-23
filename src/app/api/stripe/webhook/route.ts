@@ -1,56 +1,60 @@
+// src/app/api/stripe/webhook/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { Resend } from "resend";
 
+export const runtime = "nodejs";
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2025-01-27.acacia", // or the latest supported
+  apiVersion: "2023-10-16",
 });
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY as string);
 
 export async function POST(req: Request) {
-  const sig = req.headers.get("stripe-signature");
-  const body = await req.text();
+  const sig = req.headers.get("stripe-signature") as string;
+
+  let event: Stripe.Event;
 
   try {
-    const event = stripe.webhooks.constructEvent(
-      body,
-      sig as string,
+    const buf = await req.text();
+    event = stripe.webhooks.constructEvent(
+      buf,
+      sig,
       process.env.STRIPE_WEBHOOK_SECRET as string
     );
+  } catch (err: any) {
+    console.error("❌ Webhook signature verification failed.", err.message);
+    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+  }
 
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
 
-      const customerName = session.metadata?.customer_name;
-      const customerAddress = session.metadata?.customer_address;
-      const deck = session.metadata?.deck;
-      const email = session.customer_email;
+    try {
+      const deck = session.metadata?.deck || "No deck list provided";
+      const shipping = session.customer_details
+        ? `${session.customer_details.name}, ${session.customer_details.email}, ${session.customer_details.address?.line1}, ${session.customer_details.address?.city}`
+        : "No shipping info";
 
-      // Send YOU an email with the order details
       await resend.emails.send({
-        from: "orders@yourdomain.com", // configure this in Resend
-        to: "your-email@example.com",  // <-- your personal email
-        subject: `New Deck Order from ${customerName}`,
-        text: `
-A new order has been placed!
-
-Customer: ${customerName}
-Email: ${email}
-Address: ${customerAddress}
-
-Deck:
-${deck}
+        from: "orders@yourdomain.com", // ⚠️ change this
+        to: "youremail@example.com",   // ⚠️ your real email
+        subject: "New Deck Order 🚀",
+        html: `
+          <h2>New Deck Order</h2>
+          <p><strong>Deck List:</strong></p>
+          <pre>${deck}</pre>
+          <p><strong>Shipping Details:</strong></p>
+          <p>${shipping}</p>
         `,
       });
-    }
 
-    return NextResponse.json({ received: true });
-  } catch (err: any) {
-    console.error("Webhook error:", err.message);
-    return NextResponse.json(
-      { error: "Webhook handler failed" },
-      { status: 400 }
-    );
+      console.log("✅ Order email sent!");
+    } catch (e: any) {
+      console.error("❌ Failed to send email:", e.message);
+    }
   }
+
+  return NextResponse.json({ received: true });
 }

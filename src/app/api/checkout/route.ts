@@ -5,7 +5,6 @@ import Stripe from "stripe";
 export const runtime = "nodejs";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  // ✅ Must use the latest supported version
   apiVersion: "2023-10-16",
 });
 
