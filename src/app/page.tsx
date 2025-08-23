@@ -1,27 +1,24 @@
 // src/app/page.tsx
-import CardSearch from "@/components/CardSearch";
-import MetaAnalysis from "@/components/MetaAnalysis";
+import CardSearch from "../components/CardSearch";
+import MetaAnalysis from "../components/MetaAnalysis";
 
 export default function Home() {
   return (
-    <main className="px-6 py-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <header className="mb-6">
-        <h1 className="text-4xl font-extrabold tracking-tight">RUDY'S PROXIES</h1>
-        <p className="text-lg text-gray-300 mt-1">
-          All cards £0.50. Delivery by post or in person!
-        </p>
-      </header>
+    <main className="flex flex-col items-center p-8">
+      <h1 className="text-4xl font-bold mb-4">RUDY'S PROXIES</h1>
+      <p className="mb-6 text-lg text-gray-300">
+        All cards £0.50. Delivery by post or in person!
+      </p>
 
-      {/* Deckbuilder */}
-      <section className="w-full">
+      {/* CardSearch already handles deck + sidebar */}
+      <div className="w-full">
         <CardSearch />
-      </section>
+      </div>
 
-      {/* Meta section */}
-      <section className="w-full mt-12">
+      {/* Meta Analysis section */}
+      <div className="w-full">
         <MetaAnalysis />
-      </section>
+      </div>
     </main>
   );
 }
