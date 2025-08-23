@@ -5,17 +5,17 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    // Scryfall bulk card data
+    // Fetch Scryfall bulk card data
     const res = await fetch("https://api.scryfall.com/bulk-data/default_cards");
     const bulk = await res.json();
 
     const fileRes = await fetch(bulk.download_uri);
     const cards = await fileRes.json();
 
-    // Filter Standard-legal
+    // Filter Standard-legal cards
     const standardCards = cards.filter((c: any) => c.legalities?.standard === "legal");
 
-    // Color counts (basic 5 only)
+    // ✅ Color counts (only the 5 basics WUBRG)
     const colorCounts: Record<string, number> = { W: 0, U: 0, B: 0, R: 0, G: 0 };
     standardCards.forEach((c: any) => {
       if (c.colors?.length === 1) {
@@ -24,14 +24,14 @@ export async function GET() {
     });
     const colors = Object.entries(colorCounts).map(([name, value]) => ({ name, value }));
 
-    // Creature subtypes
+    // ✅ Creature subtypes
     const subtypeCounts: Record<string, number> = {};
     standardCards.forEach((c: any) => {
       if (c.type_line?.includes("Creature")) {
         const match = c.type_line.split("—")[1];
         if (match) {
-          const subtypes = match.split(" ");
-          subtypes.forEach((st) => {
+          const subtypes: string[] = match.split(" ");
+          subtypes.forEach((st: string) => {
             const key = st.trim();
             if (key) subtypeCounts[key] = (subtypeCounts[key] || 0) + 1;
           });
@@ -44,10 +44,13 @@ export async function GET() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
 
-    // Top Cards — grab a variety of recent non-common Standard cards
+    // ✅ Pick Top Cards (recent, non-common, with images)
     const topPool = standardCards
       .filter((c: any) => c.rarity !== "common" && c.image_uris?.normal)
-      .sort((a: any, b: any) => new Date(b.released_at).getTime() - new Date(a.released_at).getTime())
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.released_at).getTime() - new Date(a.released_at).getTime()
+      )
       .slice(0, 50);
 
     const shuffled = [...topPool].sort(() => Math.random() - 0.5);
@@ -68,6 +71,9 @@ export async function GET() {
       topCards,
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Unknown error" }, { status: 500 });
+    return NextResponse.json(
+      { error: err?.message || "Unknown error" },
+      { status: 500 }
+    );
   }
 }
