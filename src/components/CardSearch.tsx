@@ -24,7 +24,7 @@ export default function CardSearch() {
   const [deck, setDeck] = useState<DeckItem[]>([]);
   const [hoverUrl, setHoverUrl] = useState<string | null>(null);
 
-  // 🔹 React to localStorage clear (from /success page)
+  // 🔹 React to localStorage clear (from /success or /cancel)
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === "deck") {
@@ -104,6 +104,13 @@ export default function CardSearch() {
         )
         .filter((d) => d.quantity > 0)
     );
+  };
+
+  const clearDeck = () => {
+    setDeck([]);
+    localStorage.removeItem("deck");
+    localStorage.removeItem("shipping");
+    window.dispatchEvent(new StorageEvent("storage", { key: "deck" }));
   };
 
   const total = deck.reduce((s, d) => s + d.quantity * 0.5, 0);
@@ -273,15 +280,21 @@ export default function CardSearch() {
                 ))}
               </ul>
 
-              <div className="mt-4 border-t border-gray-700 pt-3">
+              <div className="mt-4 border-t border-gray-700 pt-3 space-y-3">
                 <p className="text-white font-semibold">
                   Total: £{total.toFixed(2)}
                 </p>
                 <button
-                  className="mt-3 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
+                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
                   onClick={() => alert("Checkout coming soon")}
                 >
                   Checkout
+                </button>
+                <button
+                  className="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded"
+                  onClick={clearDeck}
+                >
+                  🗑️ New Deck
                 </button>
               </div>
             </>
