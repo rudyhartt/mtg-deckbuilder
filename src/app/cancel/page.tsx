@@ -23,6 +23,7 @@ type ShippingInfo = {
 export default function CancelPage() {
   const [deck, setDeck] = useState<DeckItem[]>([]);
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const savedDeck = localStorage.getItem("deck");
@@ -42,6 +43,38 @@ export default function CancelPage() {
       }
     }
   }, []);
+
+  const retryCheckout = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          line_items: deck.map((d) => ({
+            price_data: {
+              currency: "gbp",
+              product_data: { name: d.name },
+              unit_amount: 50, // 50p per card
+            },
+            quantity: d.quantity,
+          })),
+        }),
+      });
+
+      const data = await res.json();
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Checkout failed: no URL returned.");
+      }
+    } catch (err) {
+      console.error("Retry checkout failed", err);
+      alert("Retry failed. Check console.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white p-6">
@@ -87,12 +120,25 @@ export default function CancelPage() {
           </div>
         )}
 
-        <a
-          href="/"
-          className="inline-block mt-6 px-6 py-3 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition"
-        >
-          Back to Deckbuilder
-        </a>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+          <a
+            href="/"
+            className="px-6 py-3 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition"
+          >
+            Back to Deckbuilder
+          </a>
+          <button
+            onClick={retryCheckout}
+            disabled={loading}
+            className={`px-6 py-3 rounded-lg font-semibold transition ${
+              loading
+                ? "bg-green-800 text-gray-300 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-500 text-white"
+            }`}
+          >
+            {loading ? "Retrying…" : "Retry Checkout"}
+          </button>
+        </div>
       </div>
     </div>
   );
