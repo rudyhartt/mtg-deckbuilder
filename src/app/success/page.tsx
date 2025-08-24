@@ -45,15 +45,11 @@ export default function SuccessPage() {
         setShipping(null);
       }
     }
-  }, []);
 
-  const clearData = () => {
+    // 🔹 Auto-clear after success
     localStorage.removeItem("deck");
     localStorage.removeItem("shipping");
-    setDeck([]);
-    setShipping(null);
-    alert("Saved data cleared.");
-  };
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white p-6">
@@ -112,12 +108,6 @@ export default function SuccessPage() {
           >
             Back to Deckbuilder
           </a>
-          <button
-            onClick={clearData}
-            className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition"
-          >
-            Clear Saved Data
-          </button>
         </div>
       </div>
     </div>
