@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { searchCards, fetchMoversAndShakers, type ScryCard } from "../lib/scryfall";
+import {
+  searchCards,
+  fetchMoversAndShakers,
+  type ScryCard,
+} from "../lib/scryfall";
 import type { DeckItem } from "../lib/pricing";
 
 export default function CardSearch() {
@@ -66,6 +70,7 @@ export default function CardSearch() {
           set: card.set?.toUpperCase(),
           collector_number: card.collector_number,
           image: card.image_uris?.normal,
+          rarity: card.rarity, // ✅ added rarity
           quantity: 1,
         },
       ];
@@ -110,7 +115,11 @@ export default function CardSearch() {
                 onMouseLeave={() => setHoverUrl(null)}
               >
                 {c.image_uris?.normal && (
-                  <img src={c.image_uris.normal} alt={c.name} className="card-img" />
+                  <img
+                    src={c.image_uris.normal}
+                    alt={c.name}
+                    className="card-img"
+                  />
                 )}
                 <p className="text-sm text-white mt-2">
                   {c.name} [{c.set?.toUpperCase()}-{c.collector_number}]
@@ -153,7 +162,11 @@ export default function CardSearch() {
                   onMouseLeave={() => setHoverUrl(null)}
                 >
                   {c.image_uris?.normal && (
-                    <img src={c.image_uris.normal} alt={c.name} className="card-img" />
+                    <img
+                      src={c.image_uris.normal}
+                      alt={c.name}
+                      className="card-img"
+                    />
                   )}
                   <p className="text-sm text-white mt-2">
                     {c.name} [{c.set?.toUpperCase()}-{c.collector_number}]
@@ -176,11 +189,30 @@ export default function CardSearch() {
             <ul className="space-y-3">
               {deck.map((d) => (
                 <li key={d.id} className="flex items-center gap-3">
-                  {d.image && <img src={d.image} alt={d.name} className="w-12 rounded" />}
+                  {d.image && (
+                    <img src={d.image} alt={d.name} className="w-12 rounded" />
+                  )}
                   <div className="flex-1">
                     <p className="text-white text-sm">
                       {d.name} [{d.set}-{d.collector_number}]
                     </p>
+                    {d.rarity && (
+                      <span
+                        className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          d.rarity === "common"
+                            ? "bg-gray-700 text-gray-200"
+                            : d.rarity === "uncommon"
+                            ? "bg-green-700 text-green-100"
+                            : d.rarity === "rare"
+                            ? "bg-yellow-600 text-yellow-100"
+                            : d.rarity === "mythic"
+                            ? "bg-red-700 text-red-100"
+                            : "bg-gray-600 text-white"
+                        }`}
+                      >
+                        {d.rarity}
+                      </span>
+                    )}
                     <div className="flex items-center gap-2 mt-1">
                       <button
                         className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white"
@@ -202,7 +234,9 @@ export default function CardSearch() {
             </ul>
 
             <div className="mt-4 border-t border-gray-700 pt-3">
-              <p className="text-white font-semibold">Total: £{total.toFixed(2)}</p>
+              <p className="text-white font-semibold">
+                Total: £{total.toFixed(2)}
+              </p>
               <button
                 className="mt-3 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
                 onClick={() => alert("Checkout coming soon")}
