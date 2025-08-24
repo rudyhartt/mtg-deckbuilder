@@ -12,6 +12,12 @@ import ManaCurveChart from "./ManaCurveChart";
 import ColorPieChart from "./ColorPieChart";
 import TopCreatureSubtypes from "./TopCreatureSubtypes";
 
+type ShippingInfo = {
+  name: string;
+  email: string;
+  address: string;
+};
+
 export default function CardSearch() {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ScryCard[]>([]);
@@ -24,22 +30,41 @@ export default function CardSearch() {
   const [deck, setDeck] = useState<DeckItem[]>([]);
   const [hoverUrl, setHoverUrl] = useState<string | null>(null);
 
-  // 🔹 Load deck from localStorage on mount
+  const [shipping, setShipping] = useState<ShippingInfo>({
+    name: "",
+    email: "",
+    address: "",
+  });
+
+  // 🔹 Load deck + shipping from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("deck");
-    if (saved) {
+    const savedDeck = localStorage.getItem("deck");
+    if (savedDeck) {
       try {
-        setDeck(JSON.parse(saved));
+        setDeck(JSON.parse(savedDeck));
       } catch {
         setDeck([]);
       }
     }
+    const savedShip = localStorage.getItem("shipping");
+    if (savedShip) {
+      try {
+        setShipping(JSON.parse(savedShip));
+      } catch {
+        setShipping({ name: "", email: "", address: "" });
+      }
+    }
   }, []);
 
-  // 🔹 Save deck to localStorage whenever it changes
+  // 🔹 Save deck to localStorage
   useEffect(() => {
     localStorage.setItem("deck", JSON.stringify(deck));
   }, [deck]);
+
+  // 🔹 Save shipping info to localStorage
+  useEffect(() => {
+    localStorage.setItem("shipping", JSON.stringify(shipping));
+  }, [shipping]);
 
   // Movers & Shakers fetch
   useEffect(() => {
@@ -158,7 +183,7 @@ export default function CardSearch() {
 
       const data = await res.json();
       if (data?.url) {
-        window.location.href = data.url; // redirect to Stripe (or demo success)
+        window.location.href = data.url; // redirect
       } else {
         alert("Checkout failed: no URL returned.");
       }
@@ -170,9 +195,8 @@ export default function CardSearch() {
 
   return (
     <div className="flex flex-col md:flex-row gap-6">
-      {/* LEFT */}
+      {/* LEFT: Search + Movers */}
       <div className="flex-1 space-y-6">
-        {/* Search */}
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -180,7 +204,6 @@ export default function CardSearch() {
           className="w-full p-2 rounded-md bg-gray-900 border border-gray-700 text-white"
         />
 
-        {/* Search results */}
         {searchResults.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {searchResults.map((c) => (
@@ -205,7 +228,6 @@ export default function CardSearch() {
           </div>
         )}
 
-        {/* Movers & Shakers */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-semibold">Movers & Shakers</h2>
@@ -251,7 +273,7 @@ export default function CardSearch() {
         </div>
       </div>
 
-      {/* RIGHT: Deck sidebar */}
+      {/* RIGHT: Deck + Checkout */}
       <aside className="w-full md:w-80 space-y-6">
         <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 h-fit">
           <h2 className="text-lg font-bold mb-4">Your Deck</h2>
@@ -297,12 +319,43 @@ export default function CardSearch() {
                 ))}
               </ul>
 
-              <div className="mt-4 border-t border-gray-700 pt-3">
+              <div className="mt-4 border-t border-gray-700 pt-3 space-y-3">
                 <p className="text-white font-semibold">
                   Total: £{total.toFixed(2)}
                 </p>
+
+                {/* Shipping Info Form */}
+                <div className="space-y-2 text-left">
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={shipping.name}
+                    onChange={(e) =>
+                      setShipping({ ...shipping, name: e.target.value })
+                    }
+                    className="w-full p-2 rounded-md bg-gray-800 border border-gray-700 text-white"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={shipping.email}
+                    onChange={(e) =>
+                      setShipping({ ...shipping, email: e.target.value })
+                    }
+                    className="w-full p-2 rounded-md bg-gray-800 border border-gray-700 text-white"
+                  />
+                  <textarea
+                    placeholder="Shipping Address"
+                    value={shipping.address}
+                    onChange={(e) =>
+                      setShipping({ ...shipping, address: e.target.value })
+                    }
+                    className="w-full p-2 rounded-md bg-gray-800 border border-gray-700 text-white"
+                  />
+                </div>
+
                 <button
-                  className="mt-3 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
+                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
                   onClick={handleCheckout}
                 >
                   Checkout
@@ -312,17 +365,11 @@ export default function CardSearch() {
           )}
         </div>
 
-        {/* Mana Curve */}
         <ManaCurveChart deck={deck} />
-
-        {/* Color Distribution */}
         <ColorPieChart deck={deck} />
-
-        {/* Top Creature Subtypes */}
         <TopCreatureSubtypes deck={deck} />
       </aside>
 
-      {/* Hover preview */}
       {hoverUrl && (
         <div className="fixed bottom-6 right-6 w-80 z-50 pointer-events-none">
           <img
