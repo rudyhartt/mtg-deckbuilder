@@ -3,17 +3,17 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function SuccessContent() {
+export default function CancelContent() {
   const params = useSearchParams();
-  const orderId = params.get("orderId");
+  const reason = params.get("reason");
 
   return (
     <div className="text-center space-y-4">
-      <h1 className="text-2xl font-bold text-green-500">✅ Payment Successful</h1>
-      {orderId ? (
-        <p className="text-gray-300">Your order ID is: {orderId}</p>
+      <h1 className="text-2xl font-bold text-red-500">❌ Payment Cancelled</h1>
+      {reason ? (
+        <p className="text-gray-300">Reason: {reason}</p>
       ) : (
-        <p className="text-gray-300">Thank you for your purchase! 🎉</p>
+        <p className="text-gray-300">You cancelled the checkout process.</p>
       )}
       <Link
         href="/"
