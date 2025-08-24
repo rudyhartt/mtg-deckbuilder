@@ -1,9 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true, // good to add for smaller builds
+  swcMinify: true,
   images: {
-    domains: ["c1.scryfall.com", "img.scryfall.com"],
+    domains: [
+      "c1.scryfall.com",
+      "c2.scryfall.com",
+      "c3.scryfall.com",
+      "img.scryfall.com",
+      "cards.scryfall.io",
+    ],
   },
 };
 
