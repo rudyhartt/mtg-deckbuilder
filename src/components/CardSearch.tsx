@@ -8,6 +8,11 @@ import {
 } from "../lib/scryfall";
 import type { DeckItem } from "../lib/pricing";
 
+import ManaCurveChart from "./ManaCurveChart";
+import ColorPieChart from "./ColorPieChart";
+import TopCreatureSubtypes from "./TopCreatureSubtypes";
+import TopStaples from "./TopStaples";
+
 export default function CardSearch() {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ScryCard[]>([]);
@@ -70,7 +75,11 @@ export default function CardSearch() {
           set: card.set?.toUpperCase(),
           collector_number: card.collector_number,
           image: card.image_uris?.normal,
-          rarity: card.rarity, // ✅ added rarity
+          rarity: card.rarity,
+          mana_cost: card.mana_cost,
+          cmc: card.cmc,
+          type_line: card.type_line,
+          color_identity: card.color_identity,
           quantity: 1,
         },
       ];
@@ -203,57 +212,83 @@ export default function CardSearch() {
       </div>
 
       {/* RIGHT: Deck sidebar */}
-      <aside className="w-full md:w-72 bg-gray-900 border border-gray-700 rounded-lg p-4 h-fit">
-        <h2 className="text-lg font-bold mb-4">Your Deck</h2>
+      <aside className="w-full md:w-80 space-y-6">
+        <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 h-fit">
+          <h2 className="text-lg font-bold mb-4">Your Deck</h2>
 
-        {deck.length === 0 ? (
-          <p className="text-gray-400">No cards in your deck yet.</p>
-        ) : (
-          <>
-            <ul className="space-y-3">
-              {deck.map((d) => (
-                <li key={d.id} className="flex items-center gap-3">
-                  {d.image && (
-                    <img src={d.image} alt={d.name} className="w-12 rounded" />
-                  )}
-                  <div className="flex-1">
-                    <p className="text-white text-sm">
-                      {d.name} [{d.set}-{d.collector_number}]
-                    </p>
-                    {rarityBadge(d.rarity)}
-                    <div className="flex items-center gap-2 mt-1">
-                      <button
-                        className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white"
-                        onClick={() => changeQty(d.id, -1)}
-                      >
-                        −
-                      </button>
-                      <span className="text-white">{d.quantity}</span>
-                      <button
-                        className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white"
-                        onClick={() => changeQty(d.id, +1)}
-                      >
-                        +
-                      </button>
+          {deck.length === 0 ? (
+            <p className="text-gray-400">No cards in your deck yet.</p>
+          ) : (
+            <>
+              <ul className="space-y-3">
+                {deck.map((d) => (
+                  <li key={d.id} className="flex items-center gap-3">
+                    {d.image && (
+                      <img
+                        src={d.image}
+                        alt={d.name}
+                        className="w-12 rounded"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-white text-sm">
+                        {d.name} [{d.set}-{d.collector_number}]
+                      </p>
+                      {rarityBadge(d.rarity)}
+                      {d.mana_cost && (
+                        <p className="text-xs text-gray-300 mt-0.5">
+                          Mana Cost: {d.mana_cost}
+                        </p>
+                      )}
+                      {d.type_line && (
+                        <p className="text-xs text-gray-400">{d.type_line}</p>
+                      )}
+                      <div className="flex items-center gap-2 mt-1">
+                        <button
+                          className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white"
+                          onClick={() => changeQty(d.id, -1)}
+                        >
+                          −
+                        </button>
+                        <span className="text-white">{d.quantity}</span>
+                        <button
+                          className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white"
+                          onClick={() => changeQty(d.id, +1)}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
 
-            <div className="mt-4 border-t border-gray-700 pt-3">
-              <p className="text-white font-semibold">
-                Total: £{total.toFixed(2)}
-              </p>
-              <button
-                className="mt-3 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
-                onClick={() => alert("Checkout coming soon")}
-              >
-                Checkout
-              </button>
-            </div>
-          </>
-        )}
+              <div className="mt-4 border-t border-gray-700 pt-3">
+                <p className="text-white font-semibold">
+                  Total: £{total.toFixed(2)}
+                </p>
+                <button
+                  className="mt-3 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
+                  onClick={() => alert("Checkout coming soon")}
+                >
+                  Checkout
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Mana Curve */}
+        <ManaCurveChart deck={deck} />
+
+        {/* Color Distribution */}
+        <ColorPieChart deck={deck} />
+
+        {/* Top Creature Subtypes */}
+        <TopCreatureSubtypes deck={deck} />
+
+        {/* Top Staples */}
+        <TopStaples format={format} onAdd={(c) => addToDeck(c)} />
       </aside>
 
       {/* Hover preview */}
