@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { DeckItem } from "@/lib/pricing";
+import type { DeckItem } from "../lib/pricing";
 
 export default function CheckoutDialog({
   deck,

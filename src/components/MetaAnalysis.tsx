@@ -55,7 +55,9 @@ export default function MetaAnalysis() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Top Cards */}
         <div className="bg-black p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-white mb-4">🔥 Top 5 Standard Staples</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">
+            🔥 Top 5 Standard Staples
+          </h3>
           <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {data.topCards.slice(0, 5).map((card) => (
               <li
@@ -82,7 +84,9 @@ export default function MetaAnalysis() {
 
         {/* Color Distribution */}
         <div className="bg-black p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-white mb-4">🎨 Color Distribution</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">
+            🎨 Color Distribution
+          </h3>
           {data.colors.length > 0 && (
             <PieChart width={300} height={300}>
               <Pie
@@ -111,7 +115,9 @@ export default function MetaAnalysis() {
       {/* Creature Subtypes */}
       {data.archetypes.length > 0 && (
         <div className="mt-8 bg-black p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-white mb-4">🧙 Top Creature Subtypes</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">
+            🧙 Top Creature Subtypes
+          </h3>
           <ul className="space-y-2 text-white">
             {data.archetypes.slice(0, 5).map((a, i) => (
               <li key={i}>

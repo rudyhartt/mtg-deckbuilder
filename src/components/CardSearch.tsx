@@ -1,16 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { searchCards, fetchMoversAndShakers, type ScryCard } from "@/lib/scryfall";
-
-type DeckItem = {
-  id: string;
-  name: string;
-  set?: string;
-  collector_number?: string;
-  image?: string;
-  quantity: number;
-};
+import { searchCards, fetchMoversAndShakers, type ScryCard } from "../lib/scryfall";
+import type { DeckItem } from "../lib/pricing";
 
 export default function CardSearch() {
   const [query, setQuery] = useState("");
@@ -62,7 +54,9 @@ export default function CardSearch() {
     setDeck((prev) => {
       const found = prev.find((d) => d.id === card.id);
       if (found) {
-        return prev.map((d) => (d.id === card.id ? { ...d, quantity: d.quantity + 1 } : d));
+        return prev.map((d) =>
+          d.id === card.id ? { ...d, quantity: d.quantity + 1 } : d
+        );
       }
       return [
         ...prev,
@@ -81,7 +75,9 @@ export default function CardSearch() {
   const changeQty = (id: string, delta: number) => {
     setDeck((prev) =>
       prev
-        .map((d) => (d.id === id ? { ...d, quantity: d.quantity + delta } : d))
+        .map((d) =>
+          d.id === id ? { ...d, quantity: d.quantity + delta } : d
+        )
         .filter((d) => d.quantity > 0)
     );
   };
@@ -108,7 +104,9 @@ export default function CardSearch() {
                 key={c.id}
                 className="bg-gray-900 rounded-lg p-2 shadow hover:shadow-lg cursor-pointer transition"
                 onClick={() => addToDeck(c)}
-                onMouseEnter={() => setHoverUrl(c.image_uris?.large || c.image_uris?.normal || null)}
+                onMouseEnter={() =>
+                  setHoverUrl(c.image_uris?.large || c.image_uris?.normal || null)
+                }
                 onMouseLeave={() => setHoverUrl(null)}
               >
                 {c.image_uris?.normal && (
@@ -149,7 +147,9 @@ export default function CardSearch() {
                   key={c.id}
                   className="bg-gray-900 rounded-lg p-2 shadow hover:shadow-lg cursor-pointer transition"
                   onClick={() => addToDeck(c)}
-                  onMouseEnter={() => setHoverUrl(c.image_uris?.large || c.image_uris?.normal || null)}
+                  onMouseEnter={() =>
+                    setHoverUrl(c.image_uris?.large || c.image_uris?.normal || null)
+                  }
                   onMouseLeave={() => setHoverUrl(null)}
                 >
                   {c.image_uris?.normal && (
@@ -217,7 +217,11 @@ export default function CardSearch() {
       {/* Hover preview */}
       {hoverUrl && (
         <div className="fixed bottom-6 right-6 w-80 z-50 pointer-events-none">
-          <img src={hoverUrl} alt="Preview" className="rounded-lg shadow-2xl border border-gray-700" />
+          <img
+            src={hoverUrl}
+            alt="Preview"
+            className="rounded-lg shadow-2xl border border-gray-700"
+          />
         </div>
       )}
     </div>

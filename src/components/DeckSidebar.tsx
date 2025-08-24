@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { DeckItem } from "@/lib/pricing";
+import type { DeckItem } from "../lib/pricing";
 import "./DeckSidebar.css"; // Make sure this CSS file exists to remove spinners
 
 export default function DeckSidebar({
