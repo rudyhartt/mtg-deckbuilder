@@ -24,6 +24,9 @@ export default function CardSearch() {
   const [deck, setDeck] = useState<DeckItem[]>([]);
   const [hoverUrl, setHoverUrl] = useState<string | null>(null);
 
+  // 🔹 Reference to search input
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
   // 🔹 React to localStorage clear (from /success or /cancel)
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
@@ -106,11 +109,20 @@ export default function CardSearch() {
     );
   };
 
+  // 🔹 Clear deck + reset UI
   const clearDeck = () => {
     setDeck([]);
     localStorage.removeItem("deck");
     localStorage.removeItem("shipping");
     window.dispatchEvent(new StorageEvent("storage", { key: "deck" }));
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Refocus the search input
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
   };
 
   const total = deck.reduce((s, d) => s + d.quantity * 0.5, 0);
@@ -143,6 +155,7 @@ export default function CardSearch() {
       <div className="flex-1 space-y-6">
         {/* Search */}
         <input
+          ref={searchInputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for cards..."
