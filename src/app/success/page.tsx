@@ -47,6 +47,14 @@ export default function SuccessPage() {
     }
   }, []);
 
+  const clearData = () => {
+    localStorage.removeItem("deck");
+    localStorage.removeItem("shipping");
+    setDeck([]);
+    setShipping(null);
+    alert("Saved data cleared.");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white p-6">
       <div className="max-w-2xl w-full text-center bg-gray-900 border border-gray-700 rounded-2xl p-8 shadow-xl space-y-6">
@@ -66,9 +74,7 @@ export default function SuccessPage() {
             <h2 className="text-xl font-semibold mb-2">Shipping Info</h2>
             <p className="text-gray-200">{shipping.name}</p>
             <p className="text-gray-200">{shipping.email}</p>
-            <p className="text-gray-400 whitespace-pre-line">
-              {shipping.address}
-            </p>
+            <p className="text-gray-400 whitespace-pre-line">{shipping.address}</p>
           </div>
         )}
 
@@ -99,12 +105,20 @@ export default function SuccessPage() {
           </div>
         )}
 
-        <a
-          href="/"
-          className="inline-block mt-6 px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition"
-        >
-          Back to Deckbuilder
-        </a>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+          <a
+            href="/"
+            className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition"
+          >
+            Back to Deckbuilder
+          </a>
+          <button
+            onClick={clearData}
+            className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition"
+          >
+            Clear Saved Data
+          </button>
+        </div>
       </div>
     </div>
   );

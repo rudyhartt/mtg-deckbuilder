@@ -76,6 +76,14 @@ export default function CancelPage() {
     }
   };
 
+  const clearData = () => {
+    localStorage.removeItem("deck");
+    localStorage.removeItem("shipping");
+    setDeck([]);
+    setShipping(null);
+    alert("Saved data cleared.");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white p-6">
       <div className="max-w-2xl w-full text-center bg-gray-900 border border-gray-700 rounded-2xl p-8 shadow-xl space-y-6">
@@ -137,6 +145,12 @@ export default function CancelPage() {
             }`}
           >
             {loading ? "Retrying…" : "Retry Checkout"}
+          </button>
+          <button
+            onClick={clearData}
+            className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition"
+          >
+            Clear Saved Data
           </button>
         </div>
       </div>
