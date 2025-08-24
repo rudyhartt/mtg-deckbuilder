@@ -136,6 +136,38 @@ export default function CardSearch() {
     );
   };
 
+  // 🔹 Checkout handler
+  const handleCheckout = async () => {
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          line_items: deck.map((d) => ({
+            price_data: {
+              currency: "gbp",
+              product_data: {
+                name: d.name,
+              },
+              unit_amount: 50, // 50p per card
+            },
+            quantity: d.quantity,
+          })),
+        }),
+      });
+
+      const data = await res.json();
+      if (data?.url) {
+        window.location.href = data.url; // redirect to Stripe (or demo success)
+      } else {
+        alert("Checkout failed: no URL returned.");
+      }
+    } catch (err) {
+      console.error("Checkout failed", err);
+      alert("Checkout failed. Check console.");
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-6">
       {/* LEFT */}
@@ -271,7 +303,7 @@ export default function CardSearch() {
                 </p>
                 <button
                   className="mt-3 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
-                  onClick={() => alert("Checkout coming soon")}
+                  onClick={handleCheckout}
                 >
                   Checkout
                 </button>
