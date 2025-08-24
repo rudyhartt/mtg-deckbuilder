@@ -1,33 +1,43 @@
 // src/app/api/checkout/route.ts
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2022-11-15",
+});
 
 export async function POST(req: Request) {
   try {
-    // In production, you'd read from req.json() and forward to Stripe.
     const body = await req.json();
 
-    // If Stripe key is missing, return a dummy success response
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.warn("⚠️ No STRIPE_SECRET_KEY found. Returning dummy URL.");
-      return NextResponse.json({
-        url: "/success?demo=1", // Pretend checkout succeeded
-      });
-    }
+    // Example: body should contain deck items
+    const { items } = body;
 
-    // TODO: Replace with real Stripe Checkout session creation later
-    // Example:
-    // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2023-10-16" });
-    // const session = await stripe.checkout.sessions.create({ ... });
-    // return NextResponse.json({ url: session.url });
-
-    return NextResponse.json({
-      url: "/success?demo=1", // placeholder redirect
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: items.map((item: any) => ({
+        price_data: {
+          currency: "gbp",
+          unit_amount: 50, // 50p per card
+          product_data: {
+            name: item.name,
+            description: `${item.set} #${item.collector_number} (${item.rarity})`,
+            images: item.image_uris?.normal ? [item.image_uris.normal] : [],
+          },
+        },
+        quantity: item.quantity,
+      })),
+      mode: "payment",
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cancel`,
+      metadata: {
+        deckName: body.deckName || "Untitled Deck",
+      },
     });
-  } catch (err) {
-    console.error("Checkout API error:", err);
-    return NextResponse.json(
-      { error: "Failed to create checkout session" },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ url: session.url });
+  } catch (err: any) {
+    console.error("❌ Checkout error:", err.message);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

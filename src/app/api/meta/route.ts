@@ -16,8 +16,21 @@ type ScryfallCard = {
   colors?: string[];
 };
 
+// ---- Simple in-memory cache ----
+let cachedData: any = null;
+let cachedAt: number | null = null;
+const CACHE_TTL = 1000 * 60 * 10; // 10 minutes
+
 export async function GET() {
   try {
+    const now = Date.now();
+
+    // ✅ Return cached response if fresh
+    if (cachedData && cachedAt && now - cachedAt < CACHE_TTL) {
+      return NextResponse.json(cachedData);
+    }
+
+    // 🔄 Otherwise, fetch fresh data from Scryfall
     const res = await fetch(
       "https://api.scryfall.com/cards/search?q=format:standard&unique=cards&order=edhrec"
     );
@@ -33,14 +46,12 @@ export async function GET() {
     const colorCounts: Record<string, number> = { W: 0, U: 0, B: 0, R: 0, G: 0 };
     cards.forEach((card) => {
       card.colors?.forEach((c) => {
-        if (colorCounts[c] !== undefined) {
-          colorCounts[c] += 1;
-        }
+        if (colorCounts[c] !== undefined) colorCounts[c] += 1;
       });
     });
     const colors = Object.entries(colorCounts).map(([color, count]) => ({ color, count }));
 
-    // Very simple creature type counts
+    // Creature types
     const creatureTypes: Record<string, number> = {};
     cards.forEach((card) => {
       if (card.type_line?.includes("Creature")) {
@@ -57,7 +68,7 @@ export async function GET() {
       count,
     }));
 
-    // Mana curve (count cards by converted mana cost)
+    // Mana curve
     const manaCurve: Record<string, number> = {};
     cards.forEach((card) => {
       if (card.mana_cost) {
@@ -66,25 +77,29 @@ export async function GET() {
         manaCurve[key] = (manaCurve[key] || 0) + 1;
       }
     });
-    const manaCurveArr = Object.entries(manaCurve).map(([cost, count]) => ({
-      cost,
-      count,
-    }));
+    const manaCurveArr = Object.entries(manaCurve).map(([cost, count]) => ({ cost, count }));
 
-    // Placeholder archetypes (until you plug real meta data)
+    // Archetypes (placeholder)
     const archetypes = [
       { name: "Mono-Red Aggro", count: 12 },
       { name: "Esper Control", count: 8 },
       { name: "Selesnya Midrange", count: 5 },
     ];
 
-    return NextResponse.json({
+    // ✅ Build response object
+    const payload = {
       topCards: cards.slice(0, 20),
       colors,
       manaCurve: manaCurveArr,
       creatureTypes: creatureTypesArr,
-      archetypes, // ✅ now included
-    });
+      archetypes,
+    };
+
+    // Save to cache
+    cachedData = payload;
+    cachedAt = now;
+
+    return NextResponse.json(payload);
   } catch (err) {
     console.error("Meta API error:", err);
     return NextResponse.json(
