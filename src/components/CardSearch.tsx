@@ -89,6 +89,28 @@ export default function CardSearch() {
 
   const total = deck.reduce((s, d) => s + d.quantity * 0.5, 0);
 
+  // Rarity badge helper
+  const rarityBadge = (rarity?: string) => {
+    if (!rarity) return null;
+    return (
+      <span
+        className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+          rarity === "common"
+            ? "bg-gray-700 text-gray-200"
+            : rarity === "uncommon"
+            ? "bg-green-700 text-green-100"
+            : rarity === "rare"
+            ? "bg-yellow-600 text-yellow-100"
+            : rarity === "mythic"
+            ? "bg-red-700 text-red-100"
+            : "bg-gray-600 text-white"
+        }`}
+      >
+        {rarity}
+      </span>
+    );
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-6">
       {/* LEFT */}
@@ -124,6 +146,7 @@ export default function CardSearch() {
                 <p className="text-sm text-white mt-2">
                   {c.name} [{c.set?.toUpperCase()}-{c.collector_number}]
                 </p>
+                {rarityBadge(c.rarity)}
               </div>
             ))}
           </div>
@@ -171,6 +194,7 @@ export default function CardSearch() {
                   <p className="text-sm text-white mt-2">
                     {c.name} [{c.set?.toUpperCase()}-{c.collector_number}]
                   </p>
+                  {rarityBadge(c.rarity)}
                 </div>
               ))}
             </div>
@@ -196,23 +220,7 @@ export default function CardSearch() {
                     <p className="text-white text-sm">
                       {d.name} [{d.set}-{d.collector_number}]
                     </p>
-                    {d.rarity && (
-                      <span
-                        className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          d.rarity === "common"
-                            ? "bg-gray-700 text-gray-200"
-                            : d.rarity === "uncommon"
-                            ? "bg-green-700 text-green-100"
-                            : d.rarity === "rare"
-                            ? "bg-yellow-600 text-yellow-100"
-                            : d.rarity === "mythic"
-                            ? "bg-red-700 text-red-100"
-                            : "bg-gray-600 text-white"
-                        }`}
-                      >
-                        {d.rarity}
-                      </span>
-                    )}
+                    {rarityBadge(d.rarity)}
                     <div className="flex items-center gap-2 mt-1">
                       <button
                         className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white"
