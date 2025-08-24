@@ -12,12 +12,6 @@ import ManaCurveChart from "./ManaCurveChart";
 import ColorPieChart from "./ColorPieChart";
 import TopCreatureSubtypes from "./TopCreatureSubtypes";
 
-type ShippingInfo = {
-  name: string;
-  email: string;
-  address: string;
-};
-
 export default function CardSearch() {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ScryCard[]>([]);
@@ -30,41 +24,16 @@ export default function CardSearch() {
   const [deck, setDeck] = useState<DeckItem[]>([]);
   const [hoverUrl, setHoverUrl] = useState<string | null>(null);
 
-  const [shipping, setShipping] = useState<ShippingInfo>({
-    name: "",
-    email: "",
-    address: "",
-  });
-
-  // 🔹 Load deck + shipping from localStorage
+  // 🔹 React to localStorage clear (from /success page)
   useEffect(() => {
-    const savedDeck = localStorage.getItem("deck");
-    if (savedDeck) {
-      try {
-        setDeck(JSON.parse(savedDeck));
-      } catch {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "deck") {
         setDeck([]);
       }
-    }
-    const savedShip = localStorage.getItem("shipping");
-    if (savedShip) {
-      try {
-        setShipping(JSON.parse(savedShip));
-      } catch {
-        setShipping({ name: "", email: "", address: "" });
-      }
-    }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
-
-  // 🔹 Save deck to localStorage
-  useEffect(() => {
-    localStorage.setItem("deck", JSON.stringify(deck));
-  }, [deck]);
-
-  // 🔹 Save shipping info to localStorage
-  useEffect(() => {
-    localStorage.setItem("shipping", JSON.stringify(shipping));
-  }, [shipping]);
 
   // Movers & Shakers fetch
   useEffect(() => {
@@ -161,42 +130,11 @@ export default function CardSearch() {
     );
   };
 
-  // 🔹 Checkout handler
-  const handleCheckout = async () => {
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          line_items: deck.map((d) => ({
-            price_data: {
-              currency: "gbp",
-              product_data: {
-                name: d.name,
-              },
-              unit_amount: 50, // 50p per card
-            },
-            quantity: d.quantity,
-          })),
-        }),
-      });
-
-      const data = await res.json();
-      if (data?.url) {
-        window.location.href = data.url; // redirect
-      } else {
-        alert("Checkout failed: no URL returned.");
-      }
-    } catch (err) {
-      console.error("Checkout failed", err);
-      alert("Checkout failed. Check console.");
-    }
-  };
-
   return (
     <div className="flex flex-col md:flex-row gap-6">
-      {/* LEFT: Search + Movers */}
+      {/* LEFT */}
       <div className="flex-1 space-y-6">
+        {/* Search */}
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -204,6 +142,7 @@ export default function CardSearch() {
           className="w-full p-2 rounded-md bg-gray-900 border border-gray-700 text-white"
         />
 
+        {/* Search results */}
         {searchResults.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {searchResults.map((c) => (
@@ -217,7 +156,11 @@ export default function CardSearch() {
                 onMouseLeave={() => setHoverUrl(null)}
               >
                 {c.image_uris?.normal && (
-                  <img src={c.image_uris.normal} alt={c.name} className="card-img" />
+                  <img
+                    src={c.image_uris.normal}
+                    alt={c.name}
+                    className="card-img"
+                  />
                 )}
                 <p className="text-sm text-white mt-2">
                   {c.name} [{c.set?.toUpperCase()}-{c.collector_number}]
@@ -228,6 +171,7 @@ export default function CardSearch() {
           </div>
         )}
 
+        {/* Movers & Shakers */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-semibold">Movers & Shakers</h2>
@@ -260,7 +204,11 @@ export default function CardSearch() {
                   onMouseLeave={() => setHoverUrl(null)}
                 >
                   {c.image_uris?.normal && (
-                    <img src={c.image_uris.normal} alt={c.name} className="card-img" />
+                    <img
+                      src={c.image_uris.normal}
+                      alt={c.name}
+                      className="card-img"
+                    />
                   )}
                   <p className="text-sm text-white mt-2">
                     {c.name} [{c.set?.toUpperCase()}-{c.collector_number}]
@@ -273,7 +221,7 @@ export default function CardSearch() {
         </div>
       </div>
 
-      {/* RIGHT: Deck + Checkout */}
+      {/* RIGHT: Deck sidebar */}
       <aside className="w-full md:w-80 space-y-6">
         <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 h-fit">
           <h2 className="text-lg font-bold mb-4">Your Deck</h2>
@@ -285,7 +233,13 @@ export default function CardSearch() {
               <ul className="space-y-3">
                 {deck.map((d) => (
                   <li key={d.id} className="flex items-center gap-3">
-                    {d.image && <img src={d.image} alt={d.name} className="w-12 rounded" />}
+                    {d.image && (
+                      <img
+                        src={d.image}
+                        alt={d.name}
+                        className="w-12 rounded"
+                      />
+                    )}
                     <div className="flex-1">
                       <p className="text-white text-sm">
                         {d.name} [{d.set}-{d.collector_number}]
@@ -319,44 +273,13 @@ export default function CardSearch() {
                 ))}
               </ul>
 
-              <div className="mt-4 border-t border-gray-700 pt-3 space-y-3">
+              <div className="mt-4 border-t border-gray-700 pt-3">
                 <p className="text-white font-semibold">
                   Total: £{total.toFixed(2)}
                 </p>
-
-                {/* Shipping Info Form */}
-                <div className="space-y-2 text-left">
-                  <input
-                    type="text"
-                    placeholder="Full Name"
-                    value={shipping.name}
-                    onChange={(e) =>
-                      setShipping({ ...shipping, name: e.target.value })
-                    }
-                    className="w-full p-2 rounded-md bg-gray-800 border border-gray-700 text-white"
-                  />
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    value={shipping.email}
-                    onChange={(e) =>
-                      setShipping({ ...shipping, email: e.target.value })
-                    }
-                    className="w-full p-2 rounded-md bg-gray-800 border border-gray-700 text-white"
-                  />
-                  <textarea
-                    placeholder="Shipping Address"
-                    value={shipping.address}
-                    onChange={(e) =>
-                      setShipping({ ...shipping, address: e.target.value })
-                    }
-                    className="w-full p-2 rounded-md bg-gray-800 border border-gray-700 text-white"
-                  />
-                </div>
-
                 <button
-                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
-                  onClick={handleCheckout}
+                  className="mt-3 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
+                  onClick={() => alert("Checkout coming soon")}
                 >
                   Checkout
                 </button>
@@ -365,11 +288,17 @@ export default function CardSearch() {
           )}
         </div>
 
+        {/* Mana Curve */}
         <ManaCurveChart deck={deck} />
+
+        {/* Color Distribution */}
         <ColorPieChart deck={deck} />
+
+        {/* Top Creature Subtypes */}
         <TopCreatureSubtypes deck={deck} />
       </aside>
 
+      {/* Hover preview */}
       {hoverUrl && (
         <div className="fixed bottom-6 right-6 w-80 z-50 pointer-events-none">
           <img
