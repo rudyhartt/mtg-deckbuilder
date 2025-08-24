@@ -1,60 +1,47 @@
 // src/app/api/stripe/webhook/route.ts
-import { NextResponse } from "next/server";
-import Stripe from "stripe";
-import { Resend } from "resend";
+import type Stripe from "stripe";
+import { makeStripe, makeResend } from "../../../lib/clients";
 
 export const runtime = "nodejs";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2023-10-16",
-});
-
-const resend = new Resend(process.env.RESEND_API_KEY as string);
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  const sig = req.headers.get("stripe-signature") as string;
+  const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+  const stripe = makeStripe();
+
+  if (!stripe || !STRIPE_WEBHOOK_SECRET) {
+    console.warn("[webhook] Stripe not configured. Skipping.");
+    return new Response("Stripe not configured", { status: 200 });
+  }
+
+  const body = await req.text();
+  const sig = req.headers.get("stripe-signature") || "";
 
   let event: Stripe.Event;
-
   try {
-    const buf = await req.text();
-    event = stripe.webhooks.constructEvent(
-      buf,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET as string
-    );
+    event = stripe.webhooks.constructEvent(body, sig, STRIPE_WEBHOOK_SECRET);
   } catch (err: any) {
-    console.error("❌ Webhook signature verification failed.", err.message);
-    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+    console.error("[webhook] Signature check failed:", err?.message);
+    return new Response(`Webhook Error: ${err?.message}`, { status: 400 });
   }
 
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-
     try {
-      const deck = session.metadata?.deck || "No deck list provided";
-      const shipping = session.customer_details
-        ? `${session.customer_details.name}, ${session.customer_details.email}, ${session.customer_details.address?.line1}, ${session.customer_details.address?.city}`
-        : "No shipping info";
-
-      await resend.emails.send({
-        from: "orders@yourdomain.com", // ⚠️ change this
-        to: "youremail@example.com",   // ⚠️ your real email
-        subject: "New Deck Order 🚀",
-        html: `
-          <h2>New Deck Order</h2>
-          <p><strong>Deck List:</strong></p>
-          <pre>${deck}</pre>
-          <p><strong>Shipping Details:</strong></p>
-          <p>${shipping}</p>
-        `,
-      });
-
-      console.log("✅ Order email sent!");
-    } catch (e: any) {
-      console.error("❌ Failed to send email:", e.message);
+      const resend = makeResend();
+      if (!resend) {
+        console.warn("[webhook] RESEND_API_KEY not set. Skipping email.");
+      } else {
+        await resend.emails.send({
+          from: "orders@your-domain.com",
+          to: "customer@example.com",
+          subject: "Your MTG Deck Order",
+          html: `<p>Thanks for your order!</p>`,
+        });
+      }
+    } catch (e) {
+      console.error("[webhook] Error during email send:", e);
     }
   }
 
-  return NextResponse.json({ received: true });
+  return new Response("ok", { status: 200 });
 }

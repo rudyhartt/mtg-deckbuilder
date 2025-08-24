@@ -1,29 +1,42 @@
 // src/app/api/checkout/route.ts
-import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import { makeStripe } from "../../../lib/clients";
 
 export const runtime = "nodejs";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2023-10-16",
-});
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json();
+  const stripe = makeStripe();
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      line_items: body.line_items,
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
-      metadata: body.metadata || {},
+  const body = await req.json().catch(() => ({}));
+  const line_items = Array.isArray(body?.line_items) ? body.line_items : undefined;
+
+  if (!stripe) {
+    console.warn("[checkout] Running in demo mode, Stripe not configured.");
+    return Response.json({
+      url: `${BASE_URL}/success?demo=1`,
+      demo: true,
     });
-
-    return NextResponse.json({ id: session.id });
-  } catch (err: any) {
-    console.error("Stripe checkout error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
   }
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    line_items:
+      line_items?.length
+        ? line_items
+        : [
+            {
+              price_data: {
+                currency: "gbp",
+                product_data: { name: "Deck Cards" },
+                unit_amount: 50, // £0.50
+              },
+              quantity: 1,
+            },
+          ],
+    success_url: `${BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${BASE_URL}/cancel`,
+  });
+
+  return Response.json({ url: session.url });
 }
