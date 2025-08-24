@@ -1,23 +1,19 @@
 // src/app/api/stripe/webhook/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-
-export const runtime = "nodejs";
 import { Resend } from "resend";
-import { renderOrderEmail } from "../../../../emails/order-confirmation";
+import { renderOrderEmail } from "@/emails/order-confirmation";
+
+// ✅ Next.js 14 App Router config
+// Stripe SDK must run on Node.js, not edge
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2022-11-15",
 });
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-// ❗ Disable automatic body parsing (needed for Stripe)
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 
 export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature")!;
@@ -41,7 +37,7 @@ export async function POST(req: Request) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      // Retrieve full session with line items (the event doesn't include them)
+      // 🔄 Retrieve full session with line items (not included in webhook by default)
       const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
         expand: ["line_items.data.price.product"],
       });
@@ -50,8 +46,7 @@ export async function POST(req: Request) {
         const price = li.price as Stripe.Price | null;
         const product = (price?.product as Stripe.Product) || null;
         const image =
-          (product?.images && product.images[0]) ||
-          undefined;
+          (product?.images && product.images[0]) || undefined;
 
         return {
           name: product?.name || li.description || "Card",
