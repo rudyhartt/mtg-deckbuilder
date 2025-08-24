@@ -1,5 +1,5 @@
 // src/app/api/checkout/route.ts
-import { makeStripe } from "../../../../lib/clients";
+import { makeStripe } from "../../../lib/clients";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
