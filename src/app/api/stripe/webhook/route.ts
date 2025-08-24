@@ -1,6 +1,6 @@
 // src/app/api/stripe/webhook/route.ts
 import type Stripe from "stripe";
-import { makeStripe, makeResend } from "../../../lib/clients";
+import { makeStripe, makeResend } from "../../../../lib/clients";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
