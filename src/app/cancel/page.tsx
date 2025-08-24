@@ -64,6 +64,11 @@ export default function CancelPage() {
 
       const data = await res.json();
       if (data?.url) {
+        // 🔹 Clear saved data before redirect
+        localStorage.removeItem("deck");
+        localStorage.removeItem("shipping");
+        window.dispatchEvent(new StorageEvent("storage", { key: "deck" }));
+
         window.location.href = data.url;
       } else {
         alert("Checkout failed: no URL returned.");
