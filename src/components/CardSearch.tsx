@@ -11,7 +11,6 @@ import type { DeckItem } from "../lib/pricing";
 import ManaCurveChart from "./ManaCurveChart";
 import ColorPieChart from "./ColorPieChart";
 import TopCreatureSubtypes from "./TopCreatureSubtypes";
-import TopStaples from "./TopStaples";
 
 export default function CardSearch() {
   const [query, setQuery] = useState("");
@@ -24,6 +23,23 @@ export default function CardSearch() {
 
   const [deck, setDeck] = useState<DeckItem[]>([]);
   const [hoverUrl, setHoverUrl] = useState<string | null>(null);
+
+  // 🔹 Load deck from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("deck");
+    if (saved) {
+      try {
+        setDeck(JSON.parse(saved));
+      } catch {
+        setDeck([]);
+      }
+    }
+  }, []);
+
+  // 🔹 Save deck to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("deck", JSON.stringify(deck));
+  }, [deck]);
 
   // Movers & Shakers fetch
   useEffect(() => {
@@ -146,11 +162,7 @@ export default function CardSearch() {
                 onMouseLeave={() => setHoverUrl(null)}
               >
                 {c.image_uris?.normal && (
-                  <img
-                    src={c.image_uris.normal}
-                    alt={c.name}
-                    className="card-img"
-                  />
+                  <img src={c.image_uris.normal} alt={c.name} className="card-img" />
                 )}
                 <p className="text-sm text-white mt-2">
                   {c.name} [{c.set?.toUpperCase()}-{c.collector_number}]
@@ -194,11 +206,7 @@ export default function CardSearch() {
                   onMouseLeave={() => setHoverUrl(null)}
                 >
                   {c.image_uris?.normal && (
-                    <img
-                      src={c.image_uris.normal}
-                      alt={c.name}
-                      className="card-img"
-                    />
+                    <img src={c.image_uris.normal} alt={c.name} className="card-img" />
                   )}
                   <p className="text-sm text-white mt-2">
                     {c.name} [{c.set?.toUpperCase()}-{c.collector_number}]
@@ -223,13 +231,7 @@ export default function CardSearch() {
               <ul className="space-y-3">
                 {deck.map((d) => (
                   <li key={d.id} className="flex items-center gap-3">
-                    {d.image && (
-                      <img
-                        src={d.image}
-                        alt={d.name}
-                        className="w-12 rounded"
-                      />
-                    )}
+                    {d.image && <img src={d.image} alt={d.name} className="w-12 rounded" />}
                     <div className="flex-1">
                       <p className="text-white text-sm">
                         {d.name} [{d.set}-{d.collector_number}]
@@ -286,9 +288,6 @@ export default function CardSearch() {
 
         {/* Top Creature Subtypes */}
         <TopCreatureSubtypes deck={deck} />
-
-        {/* Top Staples */}
-        <TopStaples format={format} onAdd={(c) => addToDeck(c)} />
       </aside>
 
       {/* Hover preview */}
