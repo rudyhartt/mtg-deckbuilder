@@ -23,6 +23,7 @@ export default function CardSearch() {
 
   const [deck, setDeck] = useState<DeckItem[]>([]);
   const [hoverUrl, setHoverUrl] = useState<string | null>(null);
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
 
   // 🔹 Reference to search input
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -116,16 +117,44 @@ export default function CardSearch() {
     localStorage.removeItem("shipping");
     window.dispatchEvent(new StorageEvent("storage", { key: "deck" }));
 
-    // Scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
-
-    // Refocus the search input
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
+    if (searchInputRef.current) searchInputRef.current.focus();
   };
 
   const total = deck.reduce((s, d) => s + d.quantity * 0.5, 0);
+
+  // 🔹 Handle Checkout (Stripe)
+  const handleCheckout = async () => {
+    if (deck.length === 0) return;
+    setLoadingCheckout(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          line_items: deck.map((d) => ({
+            price_data: {
+              currency: "gbp",
+              product_data: { name: d.name },
+              unit_amount: 50, // 50p per card
+            },
+            quantity: d.quantity,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (data?.url) {
+        window.location.href = data.url; // redirect to Stripe
+      } else {
+        alert("Checkout failed. No URL returned.");
+      }
+    } catch (err) {
+      console.error("Checkout failed", err);
+      alert("Checkout failed. See console.");
+    } finally {
+      setLoadingCheckout(false);
+    }
+  };
 
   // Rarity badge helper
   const rarityBadge = (rarity?: string) => {
@@ -298,10 +327,15 @@ export default function CardSearch() {
                   Total: £{total.toFixed(2)}
                 </p>
                 <button
-                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded"
-                  onClick={() => alert("Checkout coming soon")}
+                  className={`w-full font-bold py-2 rounded transition ${
+                    loadingCheckout
+                      ? "bg-green-800 text-gray-300 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-500 text-white"
+                  }`}
+                  onClick={handleCheckout}
+                  disabled={loadingCheckout}
                 >
-                  Checkout
+                  {loadingCheckout ? "Redirecting…" : "Checkout"}
                 </button>
                 <button
                   className="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded"
